@@ -70,11 +70,17 @@ func main() {
 func run(ctx context.Context, cfg config, log logF) error {
 	var dst io.Writer
 	if cfg.outputFile != "" {
-		dst, err := os.OpenFile(cfg.outputFile, os.O_CREATE|os.O_WRONLY, 0600)
+		outFile, err := os.OpenFile(cfg.outputFile, os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
 			return fmt.Errorf("failed to open file: %v", err)
 		}
-		defer dst.Close()
+		defer func(outFile *os.File) {
+			err := outFile.Close()
+			if err != nil {
+				log("Failed to close file: %v", err)
+			}
+		}(outFile)
+		dst = outFile
 	} else {
 		dst = os.Stdout
 	}
